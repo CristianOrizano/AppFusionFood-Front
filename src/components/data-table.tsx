@@ -31,11 +31,11 @@ const DataTable = <TData,>({ columns, data }: DataTableProps<TData>) => {
                       colSpan={header.colSpan}
                       className={
                         header.column.id === 'estado'
-                          ? 'text-center w-[120px]'
+                          ? 'text-center w-[100px]'
                           : header.column.id === 'actions'
-                            ? 'text-center w-[260px]'
+                            ? 'text-center w-[250px]'
                             : header.column.id === 'imagen'
-                              ? 'text-center w-[120px]'
+                              ? 'text-center w-[100px]'
                               : ''
                       }
                     >

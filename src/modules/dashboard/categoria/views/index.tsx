@@ -38,7 +38,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { showSuccess } from '@/core/helpers/toast.helper';
-import { CLOUDINARY_CATEGORIA_URL } from '@/core/constantes/env';
+import { CLOUDINARY_BASE_URL, CLOUDINARY_CATEGORIA_URL } from '@/core/constantes/env';
 
 const Index = () => {
   const [selected, setSelected] = useState<CategoriaResponse | undefined>(undefined);
@@ -46,17 +46,16 @@ const Index = () => {
   const [open, setOpen] = useState(false);
   const [openPhoto, setOpenPhoto] = useState(false);
   const [openDelete, setOpenDelete] = useState(false);
-
   const [currentRow, setCurrentRow] = useState<CategoriaResponse | undefined>(undefined);
+
   const [searchFilter, setSearchFilter] = useState<PaginationRequest<CategoriaFilter>>({
     page: 1,
     perPage: 10,
     filter: {
-      nombre: '',
-      descripcion: '',
       estado: null,
     },
   });
+
   // schema: todos los campos opcionales (para búsqueda/filtro)
   const formSchema = z
     .object({
@@ -75,7 +74,6 @@ const Index = () => {
   });
 
   const filtrarCategoria = (values: z.infer<typeof formSchema>) => {
-    console.log('Filtros aplicados:', values);
     setSearchFilter((prev) => {
       return {
         ...prev,
@@ -112,12 +110,17 @@ const Index = () => {
     },
     {
       id: 'imagen',
-      header: () => <div className="text-center w-full">Imagen</div>, // centrado
+      header: () => <div className="text-center w-fu">Imagen</div>, // centrado
+      size: 80,
       cell: ({ row }) => {
         return (
-          <div className="flex justify-center w-full">
+          <div className="flex justify-center">
             <img
-              src={row.original?.nombreImg ? `${CLOUDINARY_CATEGORIA_URL}${row.original.nombreImg}` : upload}
+              src={
+                row.original?.nombreImg
+                  ? `${CLOUDINARY_BASE_URL}/w_50,h_45,c_fill,q_auto,f_auto/categoria/${row.original.nombreImg}`
+                  : upload
+              }
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).src = upload;
               }}
@@ -147,7 +150,7 @@ const Index = () => {
           <div className="flex justify-center gap-2">
             <Button
               size="icon"
-              className="rounded-full border border-blue-300 bg-white text-sky-500 shadow-md  hover:bg-sky-50 "
+              className="rounded-full border border-blue-300 bg-white text-blue-500 shadow-md  hover:bg-sky-50 "
               onClick={() => {
                 setSelected(row.original); // pasamos la fila al modal
                 setOpen(true); // abrimos el modal
@@ -191,8 +194,8 @@ const Index = () => {
     setOpen(isOpen);
     setOpenPhoto(isOpen);
     if (!isOpen) {
-      setSelected(undefined); // 👈 limpiar data al cerrar
-      setSelectedPhoto(undefined); // 👈 limpiar data al cerrar
+      setSelected(undefined);
+      setSelectedPhoto(undefined);
     }
   };
 
@@ -310,10 +313,7 @@ const Index = () => {
               <DataTable columns={columns} data={docData} />
               {docData && (
                 <AppPagination
-                  pageIndex={searchFilter.page}
-                  pageCount={docData?.lastPage ?? 1}
                   meta={docData}
-                  pageSize={searchFilter.perPage}
                   onPageChange={(page) => setSearchFilter((prev) => ({ ...prev, page }))}
                   onPageSizeChange={(size) =>
                     setSearchFilter((prev) => ({ ...prev, page: 1, perPage: size }))

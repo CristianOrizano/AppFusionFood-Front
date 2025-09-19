@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CategoriaRequest, CategoriaResponse } from '../../domain';
+import { FoodRequest, FoodResponse } from '../../domain';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -8,22 +8,25 @@ import { Textarea } from '@/components/ui/textarea';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useCategoriaCreate, useCategoriaUpdate } from '../../application';
 import { showError, showSuccess } from '@/core/helpers/toast.helper';
 import { Loader2 } from 'lucide-react';
+import { useFoodCreate, useFoodUpdate } from '../../application';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useCategoriaFindAll } from '@/modules/dashboard/categoria/application';
 
 interface ModalSaveCategoriaProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  data?: CategoriaResponse;
+  data?: FoodResponse;
 }
 
-const ModalSaveCategoria: React.FC<ModalSaveCategoriaProps> = ({ open, onOpenChange, data }) => {
+const ModalSaveFood: React.FC<ModalSaveCategoriaProps> = ({ open, onOpenChange, data }) => {
   const [loading, setLoading] = useState(false);
-  const { mutateAsync: mutateAsyncCreate } = useCategoriaCreate();
-  const { mutateAsync: mutateAsyncEdit } = useCategoriaUpdate();
+  const { mutateAsync: mutateAsyncCreate } = useFoodCreate();
+  const { mutateAsync: mutateAsyncEdit } = useFoodUpdate();
+  const { data: docDataCategoria } = useCategoriaFindAll();
 
-  const formSchema: z.ZodType<CategoriaRequest> = z.object({
+  const formSchema: z.ZodType<FoodRequest> = z.object({
     nombre: z
       .string()
       .min(3, 'El nombre debe tener al menos 3 caracteres')
@@ -32,6 +35,13 @@ const ModalSaveCategoria: React.FC<ModalSaveCategoriaProps> = ({ open, onOpenCha
       .string()
       .min(5, 'La descripción debe tener al menos 5 caracteres')
       .max(200, 'La descripción no puede superar los 200 caracteres'),
+    precio: z
+      .number({
+        required_error: 'El precio es obligatorio',
+        invalid_type_error: 'Debes ingresar un número',
+      })
+      .min(1, 'El precio debe ser mayor a 0'),
+    idCategoria: z.number().min(1, 'Debe seleccionar una categoría'),
     nombreImg: z.string().optional(),
   });
 
@@ -40,6 +50,8 @@ const ModalSaveCategoria: React.FC<ModalSaveCategoriaProps> = ({ open, onOpenCha
     defaultValues: {
       nombre: '',
       descripcion: '',
+      precio: undefined,
+      idCategoria: undefined,
       nombreImg: '',
     },
   });
@@ -50,22 +62,25 @@ const ModalSaveCategoria: React.FC<ModalSaveCategoriaProps> = ({ open, onOpenCha
         nombre: data.nombre ?? '',
         descripcion: data.descripcion ?? '',
         nombreImg: data.nombreImg ?? '',
+        precio: data.precio ?? 0,
+        idCategoria: data.categoria?.id ?? 0,
       });
     } else {
       form.reset({
         nombre: '',
         descripcion: '',
-        nombreImg: '',
+        precio: undefined,
+        idCategoria: 0,
       });
     }
   }, [data, form]);
 
-  const saveCategoria = async (payload: CategoriaRequest) => {
+  const saveFoodMenu = async (payload: FoodRequest) => {
     try {
       setLoading(true);
 
       if (data) {
-        await mutateAsyncEdit({ id: data.id, categoria: payload });
+        await mutateAsyncEdit({ id: data.id, food: payload });
       } else {
         await mutateAsyncCreate(payload);
       }
@@ -92,10 +107,10 @@ const ModalSaveCategoria: React.FC<ModalSaveCategoriaProps> = ({ open, onOpenCha
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="mb-5">{data ? 'Editar Categoría' : 'Nueva Categoría'}</DialogTitle>
+            <DialogTitle className="mb-5">{data ? 'Editar Menú' : 'Nuevo Menú'}</DialogTitle>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(saveCategoria)} className="flex flex-col gap-6">
+            <form onSubmit={form.handleSubmit(saveFoodMenu)} className="flex flex-col gap-6">
               <div className="grid gap-6">
                 <FormField
                   control={form.control}
@@ -105,6 +120,56 @@ const ModalSaveCategoria: React.FC<ModalSaveCategoriaProps> = ({ open, onOpenCha
                       <FormLabel>Nombre</FormLabel>
                       <FormControl>
                         <Input placeholder="Nombre de la categoría" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="idCategoria"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Categoria</FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={(value) => field.onChange(Number(value))}
+                          value={field.value ? String(field.value) : ''}
+                        >
+                          <SelectTrigger
+                            className="w-full"
+                            aria-invalid={!!form.formState.errors.idCategoria}
+                          >
+                            <SelectValue placeholder="Seleccione categoría" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {docDataCategoria?.map((cat) => (
+                              <SelectItem key={cat.id} value={String(cat.id)}>
+                                {cat.nombre}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="precio"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Precio</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Ingrese Precio"
+                          value={field.value ?? ''}
+                          onChange={(e) =>
+                            field.onChange(e.target.value === '' ? undefined : Number(e.target.value))
+                          }
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -160,4 +225,4 @@ const ModalSaveCategoria: React.FC<ModalSaveCategoriaProps> = ({ open, onOpenCha
   );
 };
 
-export default ModalSaveCategoria;
+export default ModalSaveFood;

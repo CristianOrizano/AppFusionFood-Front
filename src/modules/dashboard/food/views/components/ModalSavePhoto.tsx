@@ -4,17 +4,17 @@ import { Input } from '@/components/ui/input';
 
 import React, { useEffect, useRef, useState } from 'react';
 import upload from '@/assets/uplo.jpg';
-import { CategoriaResponse } from '../../domain';
 import { Upload } from 'lucide-react';
 import useUploadPhoto from '@/core/service/application/useUploadPhoto';
 import { showError, showSuccess } from '@/core/helpers/toast.helper';
-import { useCategoriaUpdate } from '../../application';
-import { CLOUDINARY_CATEGORIA_URL } from '@/core/constantes/env';
+import { FoodResponse } from '../../domain';
+import { useFoodUpdate } from '../../application';
+import { CLOUDINARY_BASE_URL, CLOUDINARY_FOOD_URL } from '@/core/constantes/env';
 
 interface ModalSavePhotoCategoriaProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  data?: CategoriaResponse;
+  data?: FoodResponse;
 }
 const ModalSavePhoto: React.FC<ModalSavePhotoCategoriaProps> = ({ open, onOpenChange, data }) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -26,7 +26,7 @@ const ModalSavePhoto: React.FC<ModalSavePhotoCategoriaProps> = ({ open, onOpenCh
   const [loading, setLoading] = useState(false);
 
   const { mutateAsync: mutateAsyncUpload } = useUploadPhoto();
-  const { mutateAsync: mutateAsyncEdit } = useCategoriaUpdate();
+  const { mutateAsync: mutateAsyncEdit } = useFoodUpdate();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -63,7 +63,7 @@ const ModalSavePhoto: React.FC<ModalSavePhotoCategoriaProps> = ({ open, onOpenCh
     try {
       const payload = {
         file: selectedFile as File,
-        carpeta: 'categoria',
+        carpeta: 'food',
         ...(data.nombreImg && isImageValid ? { publicIdAntiguo: data.nombreImg } : {}),
       };
 
@@ -72,12 +72,15 @@ const ModalSavePhoto: React.FC<ModalSavePhotoCategoriaProps> = ({ open, onOpenCh
 
       await mutateAsyncEdit({
         id: data.id,
-        categoria: {
+        food: {
           nombre: data.nombre,
           descripcion: data.descripcion,
+          precio: data.precio,
+          idCategoria: data.categoria.id,
           nombreImg: idPhoto,
         },
       });
+      setIsImageValid(true);
       showSuccess('Imagen guardada correctamente');
       onOpenChange(false);
       setSelectedFile(null);
@@ -92,7 +95,9 @@ const ModalSavePhoto: React.FC<ModalSavePhotoCategoriaProps> = ({ open, onOpenCh
   useEffect(() => {
     if (data != undefined) {
       if (data?.nombreImg) {
-        setSelectedImage(CLOUDINARY_CATEGORIA_URL + data?.nombreImg || null);
+        setSelectedImage(
+          data?.nombreImg ? `${CLOUDINARY_BASE_URL}/w_500,c_fit,q_auto,f_auto/food/${data.nombreImg}` : null,
+        );
       } else {
         setSelectedImage(null);
       }

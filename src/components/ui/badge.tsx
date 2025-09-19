@@ -10,9 +10,9 @@ const badgeVariants = cva(
     variants: {
       variant: {
         activo:
-          'bg-teal-500 text-white font-semibold rounded-xl inset-ring-green-600/20 dark:bg-green-900 dark:text-green-300 dark:inset-ring-green-400/30',
+          'bg-teal-500 text-white font-semibold rounded-xl inset-ring-green-600/20 dark:bg-green-800 dark:text-green-200 dark:inset-ring-green-400/30',
         inactivo:
-          'bg-rose-500 text-white font-semibold  rounded-xl inset-ring-red-600/20 dark:bg-red-900 dark:text-red-300 dark:inset-ring-red-400/30',
+          'bg-rose-500 text-white font-semibold rounded-xl inset-ring-red-600/20 dark:bg-red-800 dark:text-red-200 dark:inset-ring-red-400/30',
 
         default: 'border-transparent bg-primary text-primary-foreground [a&]:hover:bg-primary/90',
         secondary: 'border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90',
